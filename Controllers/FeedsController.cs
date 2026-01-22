@@ -14,6 +14,11 @@ namespace Backend.Controllers
             Console.WriteLine("Starting UploadFeed API...");
             try
             {
+                if (model.File == null || string.IsNullOrEmpty(model.UserId) || string.IsNullOrEmpty(model.FileName))
+                {
+                    Console.WriteLine("Validation failed: Missing required fields.");
+                    return BadRequest("Missing required fields.");
+                }
 
             }
             catch (Exception)
