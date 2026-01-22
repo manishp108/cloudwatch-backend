@@ -12,6 +12,15 @@ namespace Backend.Controllers
         public async Task<IActionResult> UploadFeed([FromForm] FeedUploadModel model, CancellationToken cancellationToken)
         {
             Console.WriteLine("Starting UploadFeed API...");
+            try
+            {
+
+            }
+            catch (Exception)
+            {
+
+           throw;
+            }
 
             return Ok();
         }
