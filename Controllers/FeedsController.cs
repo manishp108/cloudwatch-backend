@@ -1,13 +1,13 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using BackEnd.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
-using System.Management;
+using BackEnd.Entities;
+using BackEnd.Models;
+using Azure.Storage.Blobs.Models;
 
-namespace Backend.Controllers
+
+namespace BackEnd.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -15,6 +15,8 @@ namespace Backend.Controllers
     {
         private readonly string _feedContainer = "media";
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly CosmosDbContext _dbContext;  //d
+
 
 
         [HttpPost("uploadFeed")]
@@ -45,7 +47,7 @@ namespace Backend.Controllers
                 var blobHttpHeaders = new BlobHttpHeaders
                 {
                     ContentType = mimeType,
-                    CacheControl = "public, max-age=31536000" // 1-year cache
+                    CacheControl = "public, max-age=31536000" // 1-year cache   
                 };
 
                 // Upload file in one step, setting headers immediately
@@ -53,15 +55,35 @@ namespace Backend.Controllers
                 await blobClient.UploadAsync(fileStream, blobHttpHeaders, cancellationToken: cancellationToken);
                 Console.WriteLine("File uploaded successfully.");
 
+                var blobUrl = blobClient.Uri.ToString();
+                Console.WriteLine($"Blob URL: {blobUrl}");
 
-                return Ok();  
-            }
-
-            catch (OperationCanceledException)
+                // Save Post Info in Cosmos DB
+                var userPost = new UserPost
                 {
-             Console.WriteLine("Upload was canceled by the client or due to timeout.");
-               return StatusCode(499, "Upload was canceled due to timeout or client cancellation.");
-             }
+                    PostId = ShortGuidGenerator.Generate(),
+                    Title = model.ProfilePic,
+                    Content = blobUrl,
+                    Caption = string.IsNullOrEmpty(model.Caption) || model.Caption == "undefined" ? string.Empty : model.Caption,
+                    AuthorId = model.UserId,
+                    AuthorUsername = model.UserName,
+                    DateCreated = DateTime.UtcNow
+                };
+
+                await _dbContext.PostsContainer.UpsertItemAsync(userPost, new PartitionKey(userPost.PostId));
+                Console.WriteLine("User post successfully saved to Cosmos DB.");
+
+                return Ok(new
+                {
+                    Message = "Feed uploaded successfully.",
+                    FeedId = userPost.PostId
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("Upload was canceled by the client or due to timeout.");
+                return StatusCode(499, "Upload was canceled due to timeout or client cancellation.");
+            }
             catch (RequestFailedException ex) when (ex.Status == 412) // Handle precondition failure
             {
                 Console.WriteLine($"Blob precondition failed: {ex.Message}");
@@ -72,7 +94,14 @@ namespace Backend.Controllers
                 Console.WriteLine($"Error during upload: {ex.Message}");
                 return StatusCode(500, $"Error uploading feed: {ex.Message}");
             }
-
         }
+        private string GetMimeType(string fileName)
+        {
+            // TODO: Implement MIME type detection logic
+            return "application/octet-stream";
+        }
+
+
     }
 }
+
