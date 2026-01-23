@@ -19,6 +19,8 @@ namespace Backend.Controllers
                     Console.WriteLine("Validation failed: Missing required fields.");
                     return BadRequest("Missing required fields.");
                 }
+                Console.WriteLine($"Received file: {model.File.FileName}, Size: {model.File.Length} bytes");
+                Console.WriteLine($"User ID: {model.UserId}, User Name: {model.UserName}");
                 return Ok();  
             }
 

@@ -14,5 +14,7 @@ namespace BackEnd.Models
         [JsonPropertyName("fileName")]
         public string FileName { get; set; } = string.Empty; // User-selected file name
 
+        [JsonPropertyName("userName")]
+        public string UserName { get; set; } = string.Empty;
     }
 }
