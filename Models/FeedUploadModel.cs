@@ -16,5 +16,13 @@ namespace BackEnd.Models
 
         [JsonPropertyName("userName")]
         public string UserName { get; set; } = string.Empty;
+
+        [JsonPropertyName("profilePic")]  
+        public string ProfilePic { get; set; } = string.Empty;   // Stores the user’s profile picture URL
+
+        [JsonPropertyName("caption")]                      
+        public string Caption { get; set; } = string.Empty; //Text content written by the user for the feed
+
+
     }
 }
