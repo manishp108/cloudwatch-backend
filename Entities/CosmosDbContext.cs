@@ -1,4 +1,4 @@
-﻿namespace backEnd.Entities
+﻿namespace BackEnd.Entities
 {
     public class CosmosDbContext
     {
