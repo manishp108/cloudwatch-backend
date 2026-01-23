@@ -19,15 +19,20 @@ namespace Backend.Controllers
                     Console.WriteLine("Validation failed: Missing required fields.");
                     return BadRequest("Missing required fields.");
                 }
-
+                return Ok();  
             }
-            catch (Exception)
+
+            catch (OperationCanceledException)
+                {
+             Console.WriteLine("Upload was canceled by the client or due to timeout.");
+               return StatusCode(499, "Upload was canceled due to timeout or client cancellation.");
+             }
+            catch (Exception ex)
             {
-
-           throw;
+                Console.WriteLine($"Error during upload: {ex.Message}");
+                return StatusCode(500, $"Error uploading feed: {ex.Message}");
             }
 
-            return Ok();
         }
     }
 }
