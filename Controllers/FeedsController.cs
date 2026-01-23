@@ -1,8 +1,11 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BackEnd.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using System.Management;
 
 namespace Backend.Controllers
 {
@@ -10,9 +13,9 @@ namespace Backend.Controllers
     [ApiController]
     public class FeedsController : ControllerBase
     {
-
         private readonly string _feedContainer = "media";
         private readonly BlobServiceClient _blobServiceClient;
+
 
         [HttpPost("uploadFeed")]
         public async Task<IActionResult> UploadFeed([FromForm] FeedUploadModel model, CancellationToken cancellationToken)
@@ -31,6 +34,24 @@ namespace Backend.Controllers
                 var containerClient = _blobServiceClient.GetBlobContainerClient(_feedContainer);
                 Console.WriteLine($"Connecting to Blob Container: {_feedContainer}");
 
+                var blobName = $"{ShortGuidGenerator.Generate()}_{Path.GetFileName(model.File.FileName)}";
+                var blobClient = containerClient.GetBlobClient(blobName);
+                Console.WriteLine($"Generated Blob Name: {blobName}");
+
+                var mimeType = GetMimeType(model.File.FileName);
+
+                // --- NEW: Use UploadAsync() instead of OpenWriteAsync() to avoid 412 errors ---
+                using var fileStream = model.File.OpenReadStream();
+                var blobHttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = mimeType,
+                    CacheControl = "public, max-age=31536000" // 1-year cache
+                };
+
+                // Upload file in one step, setting headers immediately
+                Console.WriteLine("Starting file upload...");
+                await blobClient.UploadAsync(fileStream, blobHttpHeaders, cancellationToken: cancellationToken);
+                Console.WriteLine("File uploaded successfully.");
 
 
                 return Ok();  
