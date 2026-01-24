@@ -16,7 +16,16 @@ namespace BackEnd.Controllers
         private readonly string _feedContainer = "media";
         private readonly BlobServiceClient _blobServiceClient;
         private readonly CosmosDbContext _dbContext;  //d
+        private readonly ILogger<FeedsController> _logger;  // Logger instance used to record application logs for this controller
 
+
+        // Constructor with dependency injection for database context, blob storage, and logging
+        public FeedsController(CosmosDbContext dbContext, BlobServiceClient blobServiceClient, ILogger<FeedsController> logger)
+        {
+            _dbContext = dbContext;                    // Assign Cosmos DB context
+            _blobServiceClient = blobServiceClient;    // Assign Azure Blob service client
+            _logger = logger;                          // Assign logger for diagnostic and error logging
+        }
 
 
         [HttpPost("uploadFeed")]
