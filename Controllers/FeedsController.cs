@@ -104,6 +104,25 @@ namespace BackEnd.Controllers
                 return StatusCode(500, $"Error uploading feed: {ex.Message}");
             }
         }
+
+
+
+        [HttpGet("getUserFeeds")]                // Added GET APIs for user feeds
+        public IActionResult GetUserFeeds()
+        {
+            return Ok();
+        }
+
+
+
+        [HttpGet("download")]            // // Added GET APIs for download
+        public IActionResult Download()
+        {
+            return Ok();
+        }
+
+
+
         private string GetMimeType(string fileName)
         {
 
@@ -132,8 +151,6 @@ namespace BackEnd.Controllers
             };
             return mimeTypes.TryGetValue(extension, out var mimeType) ? mimeType : "application/octet-stream";
         }
-
-
     }
 }
 
