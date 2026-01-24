@@ -97,8 +97,31 @@ namespace BackEnd.Controllers
         }
         private string GetMimeType(string fileName)
         {
-            // TODO: Implement MIME type detection logic
-            return "application/octet-stream";
+
+            var extension = Path.GetExtension(fileName).ToLower();  // Extracts the file extension from the filename and converts it to lowercase for consistent comparison
+
+
+            var mimeTypes = new Dictionary<string, string>
+            {   
+                // Image formats      
+                { ".jpg", "image/jpeg" },
+                { ".jpeg", "image/jpeg" },
+                { ".png", "image/png" },
+                { ".gif", "image/gif" },
+                { ".bmp", "image/bmp" },       // Mapping of allowed image file extensions to their corresponding MIME types
+                { ".svg", "image/svg+xml" },
+                { ".webp", "image/webp" },
+
+                // Video formats
+                { ".mp4", "video/mp4" },
+                { ".mov", "video/quicktime" },
+                { ".avi", "video/x-msvideo" },
+                { ".wmv", "video/x-ms-wmv" },    // Mapping of allowed video file extensions to their corresponding MIME types
+                { ".flv", "video/x-flv" },
+                { ".mkv", "video/x-matroska" },
+                { ".webm", "video/webm" }
+            };
+            return mimeTypes.TryGetValue(extension, out var mimeType) ? mimeType : "application/octet-stream";
         }
 
 
