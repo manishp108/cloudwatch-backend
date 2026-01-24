@@ -108,8 +108,22 @@ namespace BackEnd.Controllers
 
 
         [HttpGet("getUserFeeds")]                // Added GET APIs for user feeds
-        public IActionResult GetUserFeeds()
+        public async Task<IActionResult> GetUserFeeds()   // used async, recommended for future DB work.
         {
+            try
+            {
+                // TODO: Add DB logic here
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // TODO: Add logging if required
+                return StatusCode(500, "An error occurred while fetching user feeds.");
+            }
+
+
+
+
             return Ok();
         }
 
