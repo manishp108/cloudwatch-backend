@@ -196,9 +196,6 @@ namespace BackEnd.Controllers
             }
         }
 
-
-
-
         private async Task<List<UserPostLike>> GetLikesAsync()     // Fetch all likes from Cosmos DB asynchronously
         {
             var likes = new List<UserPostLike>();
@@ -211,17 +208,31 @@ namespace BackEnd.Controllers
             }
             return likes;
         }
-
-
-
-
-
         [HttpGet("download")]            // // Added GET APIs for download
-        public IActionResult Download()
+        public async Task<IActionResult> DownloadFile([FromQuery] string fileName) // GET API to download a file by file name
         {
-            return Ok();
-        }
+            try
+            {
+                if (string.IsNullOrEmpty(fileName))  // Validate input file name
+                {
+                    return BadRequest("File name is required.");
+                }
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_feedContainer);
+                var blobClient = containerClient.GetBlobClient(fileName);
+                if (!await blobClient.ExistsAsync())
+                {
+                    return NotFound("File not found.");
+                }
+                var downloadInfo = await blobClient.DownloadAsync();
+                return File(downloadInfo.Value.Content, downloadInfo.Value.ContentType, fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error downloading file: {ex.Message}");  
 
+                return StatusCode(500, "Error downloading file.");          // Return internal server error response
+            }
+        }
 
 
         private string GetMimeType(string fileName)
@@ -252,6 +263,12 @@ namespace BackEnd.Controllers
             };
             return mimeTypes.TryGetValue(extension, out var mimeType) ? mimeType : "application/octet-stream";
         }
+
+
+
+
+
+
     }
 }
 
