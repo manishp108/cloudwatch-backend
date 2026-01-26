@@ -279,6 +279,18 @@ namespace BackEnd.Controllers
             }
             private void InitializeTable()
             {
+                for (uint i = 0; i < 256; i++)   // Build CRC32 lookup table for fast checksum computation
+                {
+                    uint entry = i;
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if ((entry & 1) == 1)
+                            entry = (entry >> 1) ^ Polynomial;
+                        else
+                            entry >>= 1;  // Shift right if LSB is not set
+                    }
+                    table[i] = entry;       // Store computed value in lookup table
+                }
             }
 
             public override void Initialize()      // Resets the CRC value before starting a new hash computation
@@ -286,12 +298,21 @@ namespace BackEnd.Controllers
                 crc = 0xffffffff;
             }
 
-         
-
+            protected override void HashCore(byte[] array, int ibStart, int cbSize)  // Processes input data to update CRC value
+            {
+                for (int i = ibStart; i < ibStart + cbSize; i++)
+                {
+                    byte index = (byte)(crc ^ array[i]);
+                    crc = (crc >> 8) ^ table[index];
+                }
             }
 
-      
+            protected override byte[] HashFinal()
+            {
+                crc ^= 0xffffffff;
+                return BitConverter.GetBytes(crc);      // Return CRC32 value as byte array
             }
-    
+        } 
+   }
 }
 
