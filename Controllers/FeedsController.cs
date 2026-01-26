@@ -1,10 +1,11 @@
 ﻿using Azure;
 using Azure.Storage.Blobs;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
+using Azure.Storage.Blobs.Models;
 using BackEnd.Entities;
 using BackEnd.Models;
-using Azure.Storage.Blobs.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using System.Drawing.Printing;
 
 
 namespace BackEnd.Controllers
@@ -108,11 +109,25 @@ namespace BackEnd.Controllers
 
 
         [HttpGet("getUserFeeds")]                // Added GET APIs for user feeds
-        public async Task<IActionResult> GetUserFeeds()   // used async, recommended for future DB work.
+        public async Task<IActionResult> GetUserFeeds(string? userId = null, int pageNumber = 1, int pageSize = 2)   // used async, recommended for future DB work.
         {
             try
-            {
-                // TODO: Add DB logic here
+            {                        // TODO: Add DB logic here
+
+                var userPosts = new List<UserPost>();
+                // Cosmos DB SQL query to fetch posts with pagination and latest-first ordering
+                var queryString = $"SELECT * FROM f WHERE f.type='post' ORDER BY f.dateCreated DESC OFFSET {(pageNumber - 1) * pageSize} LIMIT {pageSize}";
+                Console.WriteLine($"Executing query: {queryString}");
+                var queryFromPostsContainer = _dbContext.PostsContainer.GetItemQueryIterator<UserPost>(new QueryDefinition(queryString));
+                while (queryFromPostsContainer.HasMoreResults)
+                {
+                    var response = await queryFromPostsContainer.ReadNextAsync();
+                    Console.WriteLine($"Fetched {response.Count} posts from Cosmos DB.");
+                    userPosts.AddRange(response.ToList());         // Add fetched posts to the final result list
+
+                }
+
+
                 return Ok();
             }
             catch (Exception ex)
@@ -126,6 +141,9 @@ namespace BackEnd.Controllers
 
             return Ok();
         }
+
+
+
 
 
 
