@@ -6,6 +6,7 @@ using BackEnd.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Drawing.Printing;
+using Microsoft.Azure.Cosmos.Linq;
 
 
 namespace BackEnd.Controllers
@@ -137,6 +138,26 @@ namespace BackEnd.Controllers
                         item.LikeFlag = hasUserLikedPost != null ? 1 : 0;
                     }
 
+
+                    var hasAnyReportedPost = userPosts.Any(x => x.ReportCount > 0);
+                    if (hasAnyReportedPost)
+                    {  
+                        var userReportedPostIds = new List<string>();        // List to store post IDs reported by the current user
+                        var query = _dbContext.ReportedPostsContainer.GetItemLinqQueryable<ReportedPost>()
+                                    .Where(p => p.ReportedUserId == userId)
+                                    .Select(p => p.PostId)
+                                    .ToFeedIterator();
+                        while (query.HasMoreResults)
+                        {
+                            var response = await query.ReadNextAsync();
+                            userReportedPostIds.AddRange(response.ToList());
+                        }
+
+                        if (userReportedPostIds.Count > 0)       // Remove reported posts from the user feed
+                        {
+                            userPosts = userPosts.Where(x => !userReportedPostIds.Contains(x.Id)).ToList();
+                        }
+                    }
 
                     return Ok();
             }

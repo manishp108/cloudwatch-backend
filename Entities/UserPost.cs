@@ -44,5 +44,15 @@ namespace BackEnd.Entities
         [JsonProperty(PropertyName = "dateCreated")]
         public DateTime DateCreated { get; set; }
 
+        [JsonProperty(PropertyName = "likeFlag")]
+        public int LikeFlag { get; set; }
+
+        [JsonProperty(PropertyName = "reportCount")]  
+        public int ReportCount { get; set; } = 0;     // Stores the number of reports associated with this post
+                                                      // Default value is 0 for newly created posts
+
+
+
+
     }
 }
