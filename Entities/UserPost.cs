@@ -50,7 +50,11 @@ namespace BackEnd.Entities
         [JsonProperty(PropertyName = "reportCount")]  
         public int ReportCount { get; set; } = 0;     // Stores the number of reports associated with this post
                                                       // Default value is 0 for newly created posts
+        [JsonProperty(PropertyName = "likeCount")]
+        public int LikeCount { get; set; }
 
+        [JsonProperty(PropertyName = "commentCount")]
+        public int CommentCount { get; set; }
 
 
 

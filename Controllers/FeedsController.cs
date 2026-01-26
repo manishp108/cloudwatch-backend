@@ -141,7 +141,7 @@ namespace BackEnd.Controllers
 
                     var hasAnyReportedPost = userPosts.Any(x => x.ReportCount > 0);
                     if (hasAnyReportedPost)
-                    {  
+                    {
                         var userReportedPostIds = new List<string>();        // List to store post IDs reported by the current user
                         var query = _dbContext.ReportedPostsContainer.GetItemLinqQueryable<ReportedPost>()
                                     .Where(p => p.ReportedUserId == userId)
@@ -158,8 +158,22 @@ namespace BackEnd.Controllers
                             userPosts = userPosts.Where(x => !userReportedPostIds.Contains(x.Id)).ToList();
                         }
                     }
+                }
+                Console.WriteLine("Reordering posts by LikeCount, CommentCount, and DateCreated...");
 
-                    return Ok();
+                userPosts = userPosts
+                    .OrderByDescending(x => x.DateCreated)
+                    .ThenByDescending(x => x.LikeCount)
+                    .ThenByDescending(x => x.CommentCount)
+                    .ToList();
+
+                var userIds = userPosts.Select(x => x.AuthorId).Distinct().ToList();
+
+                var usersQuery = _dbContext.UsersContainer.GetItemLinqQueryable<BlogUser>()
+                                                 .Where(x => userIds.Contains(x.Id))
+                                                 .ToFeedIterator();
+                var users = new List<BlogUser>();
+                return Ok();
             }
             catch (Exception ex)
             {

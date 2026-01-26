@@ -8,6 +8,7 @@ namespace BackEnd.Entities
         public Container PostsContainer { get; }  // Expose Cosmos DB container for posts collection
         public Container LikesContainer { get; }  // Cosmos DB container reference for storing likes data
         public Container ReportedPostsContainer { get; }
+        public Container UsersContainer { get; }
 
 
 
@@ -18,13 +19,15 @@ namespace BackEnd.Entities
             var postsContainerName = configuration["CosmosDbSettings:PostsContainerName"];
             var likesContainerName = configuration["CosmosDbSettings:LikesContainerName"];
             var reportedPostsContainerName = configuration["CosmosDbSettings:ReportedPostsContainerName"];
+            var usersContainerName = configuration["CosmosDbSettings:UsersContainerName"];
 
 
 
 
-            PostsContainer = cosmosClient.GetContainer(databaseName, postsContainerName);      // Initialize Cosmos DB container for posts, likes, 
+            PostsContainer = cosmosClient.GetContainer(databaseName, postsContainerName);      // Initialize Cosmos DB container for posts, likes, Users etc
             LikesContainer = cosmosClient.GetContainer(databaseName, likesContainerName);
             ReportedPostsContainer = cosmosClient.GetContainer(databaseName, reportedPostsContainerName);
+            UsersContainer = cosmosClient.GetContainer(databaseName, usersContainerName);
 
 
         }
