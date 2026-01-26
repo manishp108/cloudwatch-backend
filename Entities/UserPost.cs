@@ -51,11 +51,13 @@ namespace BackEnd.Entities
         public int ReportCount { get; set; } = 0;     // Stores the number of reports associated with this post
                                                       // Default value is 0 for newly created posts
         [JsonProperty(PropertyName = "likeCount")]
-        public int LikeCount { get; set; }
+        public int LikeCount { get; set; }   // Stores total number of likes on the post
 
         [JsonProperty(PropertyName = "commentCount")]
         public int CommentCount { get; set; }
 
+        [JsonProperty(PropertyName = "isVerified")]
+        public bool IsVerified { get; set; }      // Indicates whether the post author is a verified user
 
 
     }

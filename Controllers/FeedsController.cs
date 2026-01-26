@@ -19,6 +19,7 @@ namespace BackEnd.Controllers
         private readonly BlobServiceClient _blobServiceClient;
         private readonly CosmosDbContext _dbContext;  //d
         private readonly ILogger<FeedsController> _logger;  // Logger instance used to record application logs for this controller
+        private readonly string cdnBaseUrl = "https://socialnotebookscdn-ghcdgcdxc8andjgv.z02.azurefd.net/";   //defines a base URL for your CDN (Azure Front Door / Azure CDN).used to construct public media URLs (images/videos) for feeds
 
 
         // Constructor with dependency injection for database context, blob storage, and logging
@@ -161,30 +162,38 @@ namespace BackEnd.Controllers
                 }
                 Console.WriteLine("Reordering posts by LikeCount, CommentCount, and DateCreated...");
 
-                userPosts = userPosts
+                userPosts = userPosts        // Sort posts by most recent first, then by like count, then by comment count
                     .OrderByDescending(x => x.DateCreated)
                     .ThenByDescending(x => x.LikeCount)
                     .ThenByDescending(x => x.CommentCount)
                     .ToList();
 
-                var userIds = userPosts.Select(x => x.AuthorId).Distinct().ToList();
+                var userIds = userPosts.Select(x => x.AuthorId).Distinct().ToList();  // Extract distinct author IDs from the reordered posts
 
                 var usersQuery = _dbContext.UsersContainer.GetItemLinqQueryable<BlogUser>()
                                                  .Where(x => userIds.Contains(x.Id))
                                                  .ToFeedIterator();
                 var users = new List<BlogUser>();
-                return Ok();
+                while (usersQuery.HasMoreResults)
+                {
+                    var response = await usersQuery.ReadNextAsync();
+                    users.AddRange(response.ToList());
+                }
+                foreach (var post in userPosts)
+                {
+                    post.Content = post.Content.Replace("https://socialnotebooksstorage.blob.core.windows.net/", cdnBaseUrl); // Convert blob storage URLs in post content to CDN URLs to improve performance and caching
+                    var user = users.FirstOrDefault(x => x.Id == post.AuthorId);
+                    post.IsVerified = user != null ? user.IsVerified : false;      // Set verification status based on author data
+                }
+                Console.WriteLine("Reordering complete.");
+                Console.WriteLine("Returning final ordered list of posts.");
+                return Ok(new { BlogPostsMostRecent = userPosts });
             }
             catch (Exception ex)
             {
-                // TODO: Add logging if required
-                return StatusCode(500, "An error occurred while fetching user feeds.");
+                Console.WriteLine($"Error retrieving feeds: {ex.Message}");      // Log error details for debugging
+                return StatusCode(500, $"Error retrieving feeds: {ex.Message}");   // Return internal server error response
             }
-
-
-
-
-            return Ok();
         }
 
 

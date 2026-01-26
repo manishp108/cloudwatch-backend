@@ -22,5 +22,9 @@ namespace BackEnd.Entities
         [JsonProperty(PropertyName = "userId")]
         public string UserId { get; set; }
 
+        [JsonProperty(PropertyName = "isVerified")]
+        public bool IsVerified { get; set; }          // Indicates whether the user account is verified
+
+
     }
 }
