@@ -5,8 +5,9 @@ using BackEnd.Entities;
 using BackEnd.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
-using System.Drawing.Printing;
 using Microsoft.Azure.Cosmos.Linq;
+using System.Drawing.Printing;
+using System.Security.Cryptography;
 
 
 namespace BackEnd.Controllers
@@ -228,7 +229,7 @@ namespace BackEnd.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error downloading file: {ex.Message}");  
+                _logger.LogError($"Error downloading file: {ex.Message}");
 
                 return StatusCode(500, "Error downloading file.");          // Return internal server error response
             }
@@ -264,11 +265,33 @@ namespace BackEnd.Controllers
             return mimeTypes.TryGetValue(extension, out var mimeType) ? mimeType : "application/octet-stream";
         }
 
+        public class Crc32 : HashAlgorithm   // CRC32 hash algorithm implementation (skeleton version)
+        {
+            private const uint Polynomial = 0xedb88320;        // Polynomial used for CRC32 checksum calculation
+            private readonly uint[] table = new uint[256];
+            private uint crc = 0xffffffff;
+        
 
+            public Crc32()         // Constructor initializes hash size and prepares lookup table
+            {
+                InitializeTable();
+                HashSizeValue = 32;
+            }
+            private void InitializeTable()
+            {
+            }
 
+            public override void Initialize()      // Resets the CRC value before starting a new hash computation
+            {
+                crc = 0xffffffff;
+            }
 
+         
 
+            }
 
-    }
+      
+            }
+    
 }
 
