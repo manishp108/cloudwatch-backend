@@ -126,9 +126,19 @@ namespace BackEnd.Controllers
                     userPosts.AddRange(response.ToList());         // Add fetched posts to the final result list
 
                 }
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    Console.WriteLine($"UserId provided: {userId}. Checking user likes...");
+                    var likes = await GetLikesAsync();
+                    var userLikes = new List<UserPost>();
+                    foreach (var item in userPosts)
+                    {
+                        var hasUserLikedPost = likes.FirstOrDefault(x => x.PostId == item.PostId && x.LikeAuthorId == userId);
+                        item.LikeFlag = hasUserLikedPost != null ? 1 : 0;
+                    }
 
 
-                return Ok();
+                    return Ok();
             }
             catch (Exception ex)
             {
@@ -142,6 +152,21 @@ namespace BackEnd.Controllers
             return Ok();
         }
 
+
+
+
+        private async Task<List<UserPostLike>> GetLikesAsync()     // Fetch all likes from Cosmos DB asynchronously
+        {
+            var likes = new List<UserPostLike>();
+            var query = _dbContext.LikesContainer.GetItemLinqQueryable<UserPostLike>()    // Create LINQ query to retrieve items from Likes container
+                        .ToFeedIterator();
+            while (query.HasMoreResults)
+            {
+                var response = await query.ReadNextAsync();
+                likes.AddRange(response.ToList());
+            }
+            return likes;
+        }
 
 
 
