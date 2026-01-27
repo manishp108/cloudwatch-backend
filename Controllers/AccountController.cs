@@ -181,6 +181,14 @@ namespace BackEnd.Controllers
         }
 
 
+        // API endpoint placeholder for processing user profile pictures
+        // This will be extended later to handle profile image migration,
+        // optimization, or reprocessing logic
+        [HttpGet("process-profile-pics")]
+        public IActionResult ProcessProfilePictures()
+        {
+            return Ok();
+        }
 
     }
 }
