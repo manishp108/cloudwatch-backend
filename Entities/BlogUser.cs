@@ -27,5 +27,8 @@ namespace BackEnd.Entities
 
         [JsonProperty(PropertyName = "username")]
         public string Username { get; set; }   // Maps the Username property to 'username' field in Cosmos DB
+
+        [JsonProperty(PropertyName = "action")]
+        public string Action { get; set; }
     }
 }
