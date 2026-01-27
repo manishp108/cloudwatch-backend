@@ -30,5 +30,17 @@ namespace BackEnd.Entities
 
         [JsonProperty(PropertyName = "action")]
         public string Action { get; set; }
+
+        [JsonProperty(PropertyName = "email")]
+        public string Email { get; set; }
+
+        [JsonProperty(PropertyName = "profilePicUrl")]
+        public string ProfilePicUrl { get; set; }
+
+        [JsonProperty(PropertyName = "firstname")]
+        public string? FirstName { get; set; }
+
+        [JsonProperty(PropertyName = "lastname")]
+        public string? LastName { get; set; }
     }
 }

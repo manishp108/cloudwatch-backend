@@ -1,10 +1,12 @@
 ﻿
 using Azure.Storage.Blobs;
 using BackEnd.Entities;
+using BackEnd.ViewModels;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Net;
-using BackEnd.ViewModels;
+using Microsoft.Azure.Cosmos.Linq;  // Azure Cosmos DB LINQ support
 
 namespace BackEnd.Controllers
 {
@@ -14,6 +16,7 @@ namespace BackEnd.Controllers
     {
         private readonly CosmosDbContext _dbContext;          // Cosmos DB context for database operations
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly string _profileContainer = "profilepic"; // Blob container name for storing profile pictures
 
         public AccountController(CosmosDbContext dbContext, BlobServiceClient blobServiceClient)          // Constructor injection for required services
         {
@@ -87,12 +90,50 @@ namespace BackEnd.Controllers
 
 
         [HttpPost("google-verify-token")]  // API endpoint to verify Google authentication token
-        public IActionResult VerifyToken()
+        public async Task<IActionResult> VerifyToken([FromBody] GoogleTokenRequest googleTokenRequest)
         {
             try
             {
+                var payload = await GoogleJsonWebSignature.ValidateAsync(googleTokenRequest.Token);          // Validate Google ID token and extract user payload
+                var query = _dbContext.UsersContainer.GetItemLinqQueryable<BlogUser>()
+                        .Where(p => p.Email == payload.Email)
+                        .ToFeedIterator();
+                var existingUser = (await query.ReadNextAsync()).FirstOrDefault();
 
-                return Ok();
+                var firstName = payload.GivenName?.Trim();
+                var lastName = payload.FamilyName?.Trim();
+                var underscoredFirstName = payload.GivenName?.Trim();          // Extract first and last name from Google payload
+                var underscoredLastName = payload.FamilyName?.Trim();
+                if (underscoredFirstName != null)
+                {
+                    underscoredFirstName = underscoredFirstName.Replace(' ', '_');
+                }
+                if (underscoredLastName != null)
+                {
+                    underscoredLastName = underscoredLastName.Replace(' ', '_');
+                }
+                var username = $"{underscoredFirstName?.ToLower()}_{underscoredLastName?.ToLower()}"; // Generate username in lowercase format: firstname_lastname
+
+                if (existingUser != null)
+                {
+                    existingUser.FirstName = firstName;
+                    existingUser.LastName = lastName;
+                    existingUser.Username = username;
+                    existingUser.IsVerified = true;
+                    if (!string.IsNullOrEmpty(payload.Picture))
+                    {
+                        var containerClient = _blobServiceClient.GetBlobContainerClient(_profileContainer);
+                        string blobName = $"{existingUser.UserId}-profile-pic.jpg";
+                        var blobClient = containerClient.GetBlobClient(blobName);
+                        using HttpClient httpClient = new();
+                        using var stream = await httpClient.GetStreamAsync(payload.Picture);
+                        await blobClient.UploadAsync(stream, overwrite: true);
+
+                        existingUser.ProfilePicUrl = blobClient.Uri.ToString();
+                    }
+                    await _dbContext.UsersContainer.UpsertItemAsync<BlogUser>(existingUser, new PartitionKey(existingUser.UserId));
+                    return Ok(existingUser);
+                }
             }
             catch (CosmosException ex)
             {
