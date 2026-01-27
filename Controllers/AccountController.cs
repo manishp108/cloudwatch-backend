@@ -76,14 +76,33 @@ namespace BackEnd.Controllers
 
                 results.AddRange(response.ToList());
             }
-            if (results.Count > 1      // Safety check: there should never be more than one user per username
+            if (results.Count > 1)      // Safety check: there should never be more than one user per username
             {
                 throw new Exception($"More than one user found for username '{username}'");
             }
 
             var u = results.SingleOrDefault();
-            return Ok();
+            return Ok(u);
         }
+
+
+        [HttpPost("google-verify-token")]  // API endpoint to verify Google authentication token
+        public IActionResult VerifyToken()
+        {
+            try
+            {
+
+                return Ok();
+            }
+            catch (CosmosException ex)
+            {
+                return BadRequest(ex.Message);          // Handle Cosmos DB related errors
+
+            }
+
+
+        }
+
 
 
     }
