@@ -60,7 +60,31 @@ namespace BackEnd.Controllers
         }
 
 
+        [Route("Login")]
+        [HttpPost]    // API endpoint for user login
+        public async Task<IActionResult> Login(AccountLoginViewModel m)
+        {
+            var username = m.Username.Trim().ToLower();
+
+            var queryDefinition = new QueryDefinition("SELECT * FROM u WHERE u.type = 'user' AND u.username = @username").WithParameter("@username", username);
+            var query = _dbContext.UsersContainer.GetItemQueryIterator<BlogUser>(queryDefinition);
+
+            List<BlogUser> results = new List<BlogUser>();
+            while (query.HasMoreResults)
+            {
+                var response = await query.ReadNextAsync();
+
+                results.AddRange(response.ToList());
+            }
+            if (results.Count > 1      // Safety check: there should never be more than one user per username
+            {
+                throw new Exception($"More than one user found for username '{username}'");
+            }
+
+            var u = results.SingleOrDefault();
+            return Ok();
+        }
 
 
-}
+    }
 }
