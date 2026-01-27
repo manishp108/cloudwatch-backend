@@ -2,6 +2,9 @@
 using Azure.Storage.Blobs;
 using BackEnd.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using System.Net;
+using BackEnd.ViewModels;
 
 namespace BackEnd.Controllers
 {
@@ -18,5 +21,26 @@ namespace BackEnd.Controllers
             _blobServiceClient = blobServiceClient;  // Assign Blob storage client
         }
 
-    }
+        
+        [Route("Register")]
+        [HttpPost]
+        public async Task <IActionResult> Register(AccountRegisterViewModel m)
+        {
+            var username = m.Username.Trim().ToLower();
+
+            var user = new BlogUser
+            {
+                UserId = Guid.NewGuid().ToString(),   // Generate unique user ID
+                Username = username    // Assign normalized username
+            };  
+
+           
+
+            return Ok();
+        }
+
+
+
+
+}
 }

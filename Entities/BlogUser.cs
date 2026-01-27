@@ -25,6 +25,7 @@ namespace BackEnd.Entities
         [JsonProperty(PropertyName = "isVerified")]
         public bool IsVerified { get; set; }          // Indicates whether the user account is verified
 
-
+        [JsonProperty(PropertyName = "username")]
+        public string Username { get; set; }   // Maps the Username property to 'username' field in Cosmos DB
     }
 }
