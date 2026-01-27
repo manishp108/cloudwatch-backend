@@ -134,14 +134,50 @@ namespace BackEnd.Controllers
                     await _dbContext.UsersContainer.UpsertItemAsync<BlogUser>(existingUser, new PartitionKey(existingUser.UserId));
                     return Ok(existingUser);
                 }
-            }
+
+                // Add new user to Cosmos DB
+                try
+                {
+                    string userId = ShortGuidGenerator.Generate();     // Generate a short unique user ID
+                    string profilePicBlobUrl = string.Empty;      // Initialize profile picture URL
+                    if (!string.IsNullOrEmpty(payload.Picture))
+                    {
+                        var containerClient = _blobServiceClient.GetBlobContainerClient(_profileContainer);          // Get Azure Blob container for profile images
+                        string blobName = $"{userId}-profile-pic.jpg";
+                        var blobClient = containerClient.GetBlobClient(blobName);
+                        using HttpClient httpClient = new();
+                        using var stream = await httpClient.GetStreamAsync(payload.Picture);
+                        await blobClient.UploadAsync(stream, overwrite: true);
+
+                        profilePicBlobUrl = blobClient.Uri.ToString();
+                    }
+
+                    var user = new BlogUser      // Create a new BlogUser entity from Google profile data
+                    {
+                        UserId = userId,      // Unique user identifier
+                        Email = payload.Email,
+                        Username = username,
+                        FirstName = firstName,
+                        LastName = lastName,
+                        ProfilePicUrl = profilePicBlobUrl,  // Profile picture blob URL
+                        Action = "Create",
+                        IsVerified = true
+                    };
+
+                    await _dbContext.UsersContainer.CreateItemAsync<BlogUser>(user, new PartitionKey(user.UserId));      // Persist user record in Cosmos DB
+
+
+                    return Ok(user);
+                } 
             catch (CosmosException ex)
             {
                 return BadRequest(ex.Message);          // Handle Cosmos DB related errors
-
+                }
             }
-
-
+            catch (InvalidJwtException e)
+            {
+                return Unauthorized();      // Handle invalid or expired Google JWT token
+            }
         }
 
 
