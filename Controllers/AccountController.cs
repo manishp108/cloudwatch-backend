@@ -185,9 +185,35 @@ namespace BackEnd.Controllers
         // This will be extended later to handle profile image migration,
         // optimization, or reprocessing logic
         [HttpGet("process-profile-pics")]
-        public IActionResult ProcessProfilePictures()
+        public async Task<IActionResult> ProcessProfilePictures()
         {
-            return Ok();
+            var query = _dbContext.UsersContainer.GetItemLinqQueryable<BlogUser>(allowSynchronousQueryExecution: true);      // Query Cosmos DB for users having Google-hosted profile pictures
+            var googleUsers = query.Where(u => u.ProfilePicUrl != null && u.ProfilePicUrl.Contains("googleusercontent.com")).ToList();      // Filter users whose profile picture URL is from Google
+
+            foreach (var user in googleUsers)
+            {
+                string newBlobUrl = await DownloadAndSaveProfilePic(user.ProfilePicUrl, user.Id);
+                user.ProfilePicUrl = newBlobUrl;
+
+                // Update user in Cosmos DB
+                await _dbContext.UsersContainer.ReplaceItemAsync(user, user.Id);
+            }
+            return Ok("Profile pictures processed.");
+        }
+
+        private async Task<string> DownloadAndSaveProfilePic(string profilePicUrl, string userId)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(_profileContainer);
+            await containerClient.CreateIfNotExistsAsync();
+
+            string blobName = $"{userId}-profile-pic.jpg";
+            BlobClient blobClient = containerClient.GetBlobClient(blobName);
+
+            using HttpClient httpClient = new HttpClient();
+            using var stream = await httpClient.GetStreamAsync(profilePicUrl);
+            await blobClient.UploadAsync(stream, overwrite: true);
+
+            return blobClient.Uri.ToString();
         }
 
     }
