@@ -67,9 +67,27 @@ namespace BackEnd.Controllers
 
 
         [HttpGet("getUser")]    // GET Web API endpoint or REST API method or HTTP GET method
-        public IActionResult GetUser()
+        public async Task<IActionResult> GetUser(string userId)
         {
-            return Ok();
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("Invalid User Id.");
+            }
+            try
+            {
+                // TODO: Fetch user details from Cosmos DB using userId
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+
+           }
+
+
+
         }
-    }
 }
