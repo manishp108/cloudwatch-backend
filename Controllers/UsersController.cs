@@ -209,7 +209,18 @@ namespace BackEnd.Controllers
             DictionaryEntry selectedEntry = matchingEntries[_random.Next(matchingEntries.Count)];
             return $"{selectedEntry.Key}-{selectedEntry.Value}";
         }
-        
+
+        private string GetFrenchPart(string entry)
+        {
+            var parts = entry?.Split('-');  // Split the entry into French-English parts
+            return parts?[0].Split('_')[1];   // Return the French word (assumes format: "Adj_french-English")
+        }
+
+        private string GetEnglishPart(string entry)
+        { 
+            var parts = entry?.Split('-');    // Split the entry into French-English parts
+            return parts?[1];               // Return the English word
+        }
 
     }
     }
