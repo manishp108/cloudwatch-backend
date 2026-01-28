@@ -65,5 +65,11 @@ namespace BackEnd.Controllers
 
         }
 
+
+        [HttpGet("getUser")]    // GET Web API endpoint or REST API method or HTTP GET method
+        public IActionResult GetUser()
+        {
+            return Ok();
+        }
     }
 }
