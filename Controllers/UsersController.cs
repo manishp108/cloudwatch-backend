@@ -1,8 +1,10 @@
 ﻿using Azure.Storage.Blobs;
 using BackEnd.Entities;
 using BackEnd.Models;
-using Microsoft.AspNetCore.Mvc;
 using BackEnd.Shared;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 
 
 namespace BackEnd.Controllers
@@ -77,9 +79,32 @@ namespace BackEnd.Controllers
             try
             {
                 // TODO: Fetch user details from Cosmos DB using userId
+                var query = _dbContext.UsersContainer.GetItemLinqQueryable<BlogUser>()
+                        .Where(x => x.UserId == userId)
+                        .ToFeedIterator();
+                var user = (await query.ReadNextAsync()).FirstOrDefault();
 
-                return Ok();
+                if (user != null)
+                {
+                    return Ok(new
+                    {
+                        userId = user.Id,
+                        email = user.Email,
+                        username = user.Username,
+                        firstname = user.FirstName,
+                        lastname = user.LastName,
+                        profilePic = user.ProfilePicUrl,
+                        isVerified = user.IsVerified
+                    });
+                }
+
+                return BadRequest("User not found.");
             }
+            catch (CosmosException ex)
+            {
+                return StatusCode(500, $"Cosmos DB Error: {ex.Message}");
+            }
+            
             catch (Exception ex)
             {
                 return StatusCode(500, $"An error occurred: {ex.Message}");
