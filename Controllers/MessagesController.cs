@@ -83,11 +83,22 @@ namespace BackEnd.Controllers
 
         [Route("chat-history/{chatId}")]    // Route to fetch chat history using chatId
         [HttpGet]                     // Handles HTTP GET requests
-        public IActionResult GetChatHistory()
+        public async Task<IActionResult> GetChatHistory(string chatId)
         {
             // We will Implement logic to fetch chat history for the given chatId
 
-            return Ok();
+            var messageQuery = _dbContext.MessagesContainer.GetItemLinqQueryable<Message>()  // Fetch all messages belonging to the specified chatId
+                                                 .Where(m => m.ChatId == chatId)
+                                                 .OrderBy(m => m.Timestamp)
+                                                 .ToFeedIterator();
+
+            var messages = new List<Message>();
+            while (messageQuery.HasMoreResults)
+            {
+                var response = await messageQuery.ReadNextAsync();
+                messages.AddRange(response.ToList());
+            }
+            return Ok(messages);
         }
 
 

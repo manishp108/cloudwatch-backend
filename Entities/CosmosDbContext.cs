@@ -9,6 +9,8 @@ namespace BackEnd.Entities
         public Container LikesContainer { get; }  // Cosmos DB container reference for storing likes data
         public Container ReportedPostsContainer { get; }
         public Container UsersContainer { get; }
+        public Container ChatsContainer { get; }
+        public Container MessagesContainer { get; }  // Cosmos DB container for storing chat messages
 
 
 
@@ -20,6 +22,8 @@ namespace BackEnd.Entities
             var likesContainerName = configuration["CosmosDbSettings:LikesContainerName"];
             var reportedPostsContainerName = configuration["CosmosDbSettings:ReportedPostsContainerName"];
             var usersContainerName = configuration["CosmosDbSettings:UsersContainerName"];
+            var chatsContainerName = configuration["CosmosDbSettings:ChatsContainerName"];
+            var messagesContainerName = configuration["CosmosDbSettings:MessagesContainerName"];
 
 
 
@@ -28,6 +32,8 @@ namespace BackEnd.Entities
             LikesContainer = cosmosClient.GetContainer(databaseName, likesContainerName);
             ReportedPostsContainer = cosmosClient.GetContainer(databaseName, reportedPostsContainerName);
             UsersContainer = cosmosClient.GetContainer(databaseName, usersContainerName);
+            ChatsContainer = cosmosClient.GetContainer(databaseName, chatsContainerName);
+            MessagesContainer = cosmosClient.GetContainer(databaseName, messagesContainerName);
 
 
         }
