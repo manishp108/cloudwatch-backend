@@ -28,7 +28,15 @@ namespace BackEnd.Controllers
         }
 
 
+        [Route("chat-users/{userId}")]   // Route to fetch users the given user has chatted with
+        [HttpGet]                        // Handles HTTP GET requests
+        public  IActionResult GetUsersChattedWith()
+        {
 
+            // Here we will Implement logic to fetch users the given user has chatted with.
+            // In short involve querying Cosmos DB using the userId  
+            return Ok();
+        }
 
 
     }
