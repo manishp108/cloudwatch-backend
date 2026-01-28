@@ -190,7 +190,8 @@ namespace BackEnd.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error");
+                Console.WriteLine($"Error receiving messages: {ex.Message}");    // Log error details when message retrieval from Service Bus fails
+                return StatusCode(500, "Error receiving messages from the Service Bus queue.");
             }
         }
 
