@@ -35,7 +35,7 @@ namespace BackEnd.Controllers
         [HttpGet]                        // Handles HTTP GET requests
         public async Task<IActionResult> GetUsersChattedWith(string userId)
         {           // Here we will Implement logic to fetch users the given user has chatted with.
-                   // In short involve querying Cosmos DB using the userId  
+                    // In short involve querying Cosmos DB using the userId  
             var chatQuery = _dbContext.ChatsContainer.GetItemLinqQueryable<Chat>()
                                                  .Where(m => m.SenderId == userId || m.RecipientId == userId)
                                                  .OrderByDescending(m => m.Timestamp)  // Latest chats first
@@ -128,10 +128,32 @@ namespace BackEnd.Controllers
                         };
                         await _dbContext.ChatsContainer.CreateItemAsync(chat, new PartitionKey(chat.Id));  // using Microsoft.Azure.Cosmos;
 
+                         else
+                        {
+                            request.ChatId = existingChat.Id;
+                        }
                     }
-                    return Ok();
+                    else
+                    {
+                        existingChat = _dbContext.ChatsContainer.GetItemLinqQueryable<Chat>()
+                            .Where(c => (c.Id == request.ChatId))
+                            .FirstOrDefault();
+                        if (existingChat == null)
+                        {
+                            return BadRequest("Incorrect ChatId. Chat not found.");
+                        }
+                        existingChat.Timestamp = DateTime.UtcNow;
+                        await _dbContext.ChatsContainer.UpsertItemAsync(existingChat, new PartitionKey(existingChat.Id));     // Upsert chat record to Cosmos DB
+                        return Ok();
+
+                    }
+                    return BadRequest("Invalid Request Data");
+                }
+
+            }
 
         }
+
 
     }
 }
