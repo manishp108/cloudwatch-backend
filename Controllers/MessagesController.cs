@@ -167,6 +167,22 @@ namespace BackEnd.Controllers
             }
 
 
+        [HttpGet("get-new-messages")]   // Route to fetch new/unread messages for the user
+        public async Task<IActionResult> GetNewMessages()
+        {
+            var messages = new List<Message>();   // Collection to store received messages
+            var queueName = _configuration["ServiceBus:QueueName"];
+            var receiver = _serviceBusClient.CreateReceiver(queueName); // Create Service Bus receiver for the configured queue
+
+            try
+            {
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
         private async Task PublishMessageToServiceBus(Message message)
         { 
