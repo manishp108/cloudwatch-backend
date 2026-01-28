@@ -113,6 +113,20 @@ namespace BackEnd.Controllers
            }
 
 
+        [HttpGet("create")]    
+        public async Task<IActionResult> CreateUser()
+        {
+
+            try
+            {
+                // TODO: Implement user creation logic
+                return Ok();
+               }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error");
+            }
+        }
 
         }
 }
