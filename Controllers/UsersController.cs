@@ -157,5 +157,31 @@ namespace BackEnd.Controllers
             }
         }
 
+        private string GenerateRandomName()  // Generate a random username combining an adjective and a noun
+        {
+            string adjective = GetRandomResource("Adj_");
+            string noun = GetRandomResource("Noun_");
+
+            bool isAdjectiveFrench = _random.Next(2) == 0;
+            // Swap languages: adjective in French/English, noun in opposite language
+            string finalAdjective = isAdjectiveFrench ? GetFrenchPart(adjective) : GetEnglishPart(adjective);
+            string finalNoun = isAdjectiveFrench ? GetEnglishPart(noun) : GetFrenchPart(noun);
+            return $"{finalAdjective}_{finalNoun}";
         }
-}
+
+
+
+        private string GetFrenchPart(string entry)  // Extract French part from resource string
+        {
+            var parts = entry?.Split('-');
+            return parts?[0].Split('_')[1];
+        }
+
+        private string GetEnglishPart(string entry)  // Extract English part from resource string
+        {
+            var parts = entry?.Split('-');
+            return parts?[1];
+        }
+
+    }
+    }
