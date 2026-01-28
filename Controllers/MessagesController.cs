@@ -2,7 +2,6 @@
 using Azure.Messaging.ServiceBus;
 using BackEnd.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Cosmos.Linq;
 using Newtonsoft.Json;
 using Microsoft.Azure.Cosmos;
@@ -127,32 +126,47 @@ namespace BackEnd.Controllers
                             Timestamp = DateTime.UtcNow
                         };
                         await _dbContext.ChatsContainer.CreateItemAsync(chat, new PartitionKey(chat.Id));  // using Microsoft.Azure.Cosmos;
-
-                         else
-                        {
-                            request.ChatId = existingChat.Id;
-                        }
+                    }
+                    else
+                    {
+                        request.ChatId = existingChat.Id;
+                    }
                     }
                     else
                     {
                         existingChat = _dbContext.ChatsContainer.GetItemLinqQueryable<Chat>()
                             .Where(c => (c.Id == request.ChatId))
                             .FirstOrDefault();
-                        if (existingChat == null)
-                        {
-                            return BadRequest("Incorrect ChatId. Chat not found.");
+                        if (existingChat == null)      // Return error if ChatId is invalid
+                    {
+                        return BadRequest("Incorrect ChatId. Chat not found.");
                         }
                         existingChat.Timestamp = DateTime.UtcNow;
                         await _dbContext.ChatsContainer.UpsertItemAsync(existingChat, new PartitionKey(existingChat.Id));     // Upsert chat record to Cosmos DB
-                        return Ok();
-
                     }
-                    return BadRequest("Invalid Request Data");
-                }
 
+                    var message = new Message  // Create a new message entity
+                    {
+                        Id = ShortGuidGenerator.Generate(),
+                        ChatId = request.ChatId,
+                        SenderId = request.SenderId,
+                        RecipientId = request.RecipientId,
+                        Content = request.Content,
+                        Timestamp = DateTime.UtcNow   // Message sent time
+                    };
+
+                    await _dbContext.MessagesContainer.CreateItemAsync(message, new PartitionKey(message.Id));
+
+                    // Publish message to Service Bus
+                    await PublishMessageToServiceBus(message);   // Publish message to Azure Service Bus for downstream processing / notifications
+
+
+                return Ok(new { request.ChatId });
+                }
+                return BadRequest("Invalid Request Data");
             }
 
-        }
+
 
 
     }
