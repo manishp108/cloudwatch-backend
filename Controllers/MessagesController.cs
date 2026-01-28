@@ -176,7 +176,17 @@ namespace BackEnd.Controllers
 
             try
             {
-                return Ok();
+                // Receive up to 10 messages or wait for 5 seconds
+                var receivedMessages = await receiver.ReceiveMessagesAsync(maxMessages: 1, maxWaitTime: TimeSpan.FromSeconds(5));
+
+                foreach (var message in receivedMessages)
+                {
+                    messages.Add(JsonConvert.DeserializeObject<Message>(message.Body.ToString()));
+
+                    // Complete the message to remove it from the queue
+                    await receiver.CompleteMessageAsync(message);
+                }
+                return Ok(messages);
             }
             catch (Exception ex)
             {
