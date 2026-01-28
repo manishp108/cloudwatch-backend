@@ -2,6 +2,7 @@
 using Azure.Messaging.ServiceBus;
 using BackEnd.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Cosmos.Linq;
 using Newtonsoft.Json;
 
@@ -78,6 +79,17 @@ namespace BackEnd.Controllers
             }
             return Ok(chatUsers.OrderByDescending(x => x.TimeStamp));
         }
+
+
+        [Route("chat-history/{chatId}")]    // Route to fetch chat history using chatId
+        [HttpGet]                     // Handles HTTP GET requests
+        public IActionResult GetChatHistory()
+        {
+            // We will Implement logic to fetch chat history for the given chatId
+
+            return Ok();
+        }
+
 
 
     }
