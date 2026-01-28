@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Cosmos.Linq;
 using Newtonsoft.Json;
+using Microsoft.Azure.Cosmos;
 
 namespace BackEnd.Controllers
 {
@@ -102,10 +103,33 @@ namespace BackEnd.Controllers
         }
 
         [Route("send-message")]
-        [HttpPost]
-        public IActionResult SendMessage()
+        [HttpPost]     // Handles HTTP POST requests
+        public async Task<IActionResult> SendMessage([FromBody] SendMessage request)
         {
-            return Ok();
+
+            //Here we will Implement logic to send a message
+            if (request != null && request.SenderId != null && request.RecipientId != null && request.Content != null)
+            {
+                var existingChat = new Chat();
+                if (request.ChatId == null)
+                {
+                    existingChat = _dbContext.ChatsContainer.GetItemLinqQueryable<Chat>()
+                        .Where(c => (c.SenderId == request.SenderId && c.RecipientId == request.RecipientId) || (c.RecipientId == request.SenderId && c.SenderId == request.RecipientId))
+                        .FirstOrDefault();
+                    if (existingChat == null)
+                    {
+                        request.ChatId = ShortGuidGenerator.Generate();
+                        var chat = new Chat
+                        {
+                            Id = request.ChatId,
+                            SenderId = request.SenderId,
+                            RecipientId = request.RecipientId,
+                            Timestamp = DateTime.UtcNow
+                        };
+                        await _dbContext.ChatsContainer.CreateItemAsync(chat, new PartitionKey(chat.Id));  // using Microsoft.Azure.Cosmos;
+
+                    }
+                    return Ok();
 
         }
 
