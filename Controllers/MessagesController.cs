@@ -2,7 +2,8 @@
 using Azure.Messaging.ServiceBus;
 using BackEnd.Entities;
 using Microsoft.AspNetCore.Mvc;
-using System.Configuration;
+using Microsoft.Azure.Cosmos.Linq;
+using Newtonsoft.Json;
 
 namespace BackEnd.Controllers
 {
@@ -30,12 +31,52 @@ namespace BackEnd.Controllers
 
         [Route("chat-users/{userId}")]   // Route to fetch users the given user has chatted with
         [HttpGet]                        // Handles HTTP GET requests
-        public  IActionResult GetUsersChattedWith()
-        {
+        public async Task<IActionResult> GetUsersChattedWith(string userId)
+        {           // Here we will Implement logic to fetch users the given user has chatted with.
+                   // In short involve querying Cosmos DB using the userId  
+            var chatQuery = _dbContext.ChatsContainer.GetItemLinqQueryable<Chat>()
+                                                 .Where(m => m.SenderId == userId || m.RecipientId == userId)
+                                                 .OrderByDescending(m => m.Timestamp)  // Latest chats first
+                                                 .ToFeedIterator();
 
-            // Here we will Implement logic to fetch users the given user has chatted with.
-            // In short involve querying Cosmos DB using the userId  
-            return Ok();
+            var chats = new List<Chat>();
+            while (chatQuery.HasMoreResults)
+            {
+                var response = await chatQuery.ReadNextAsync();
+                chats.AddRange(response.ToList());
+            }
+
+            var userIds = chats
+                .Select(m => m.SenderId == userId ? m.RecipientId : m.SenderId)
+                .Distinct()
+                .ToList();
+
+            var userQuery = _dbContext.UsersContainer.GetItemLinqQueryable<BlogUser>()
+                                          .Where(u => userIds.Contains(u.Id))         // Fetch user details for all chatted user IDs
+                                          .ToFeedIterator();
+
+            var users = new List<BlogUser>();
+            while (userQuery.HasMoreResults)
+            {
+                var response = await userQuery.ReadNextAsync();
+                users.AddRange(response.ToList());
+            }
+
+            var chatUsers = new List<ChatUser>();
+            foreach (var user in users)
+            {
+                var chat = chats.First(x => x.SenderId == user.Id || x.RecipientId == user.Id);
+                chatUsers.Add(new ChatUser()
+                {
+                    UserId = user.Id,
+                    Email = user.Email,
+                    ProfilePicUrl = user.ProfilePicUrl,
+                    Username = user.Username,
+                    ChatId = chat.Id,
+                    TimeStamp = chat.Timestamp
+                });
+            }
+            return Ok(chatUsers.OrderByDescending(x => x.TimeStamp));
         }
 
 
