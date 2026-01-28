@@ -46,7 +46,17 @@ namespace BackEnd.Controllers
 
                     updatedPicURL = blobClient.Uri.ToString(); // Direct Blob Storage URL
                 }
-                return Ok();
+
+                var itemToUpdate = new BlogUser
+                {
+                    UserId = model.UserId,        // User identifier
+                    Username = model.UserName,    // Updated username
+                    ProfilePicUrl = updatedPicURL   // Updated profile picture URL
+                };  
+
+                var updatedItem = await _dbContext.UsersContainer.UpsertItemAsync(itemToUpdate);
+                Console.WriteLine("Item updated successfully: " + updatedItem);
+                return Ok(new { Message = "Profile updated successfully.", UserId = model.UserId });
             }
             catch (Exception ex)
             {
