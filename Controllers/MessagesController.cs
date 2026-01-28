@@ -168,6 +168,14 @@ namespace BackEnd.Controllers
 
 
 
+        private async Task PublishMessageToServiceBus(Message message)
+        { 
+            // Serialize message object to JSON format
+            var messageBody = JsonConvert.SerializeObject(message);
+            var serviceBusMessage = new ServiceBusMessage(messageBody);
 
+            await _serviceBusSender.SendMessageAsync(serviceBusMessage);   // Publish message to Azure Service Bus
+
+        }
     }
 }
