@@ -5,7 +5,10 @@ using BackEnd.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using System.Collections;
 using System.Net;
+using System.Reflection;
+using System.Resources;
 
 
 namespace BackEnd.Controllers
@@ -17,6 +20,7 @@ namespace BackEnd.Controllers
 
         private readonly CosmosDbContext _dbContext;
         private readonly BlobServiceClient _blobServiceClient;
+        private static readonly Random _random = new Random();
         private readonly string _profileContainer = "profilepics";  // Blob container for storing profile pictures
 
         public UsersController(CosmosDbContext dbContext, BlobServiceClient blobServiceClient)
@@ -169,19 +173,43 @@ namespace BackEnd.Controllers
             return $"{finalAdjective}_{finalNoun}";
         }
 
-
-
-        private string GetFrenchPart(string entry)  // Extract French part from resource string
+        private string GetRandomProfilePic()  // Generate a random profile picture URL from Blob Storage
         {
-            var parts = entry?.Split('-');
-            return parts?[0].Split('_')[1];
+            int randomNumber = _random.Next(1, 5); // Generate a random number between 1 and 25
+            var containerClient = _blobServiceClient.GetBlobContainerClient(_profileContainer);
+            return $"{containerClient.Uri}/pp{randomNumber}.jpg"; // Blob Storage URL
         }
 
-        private string GetEnglishPart(string entry)  // Extract English part from resource string
+
+        private string GetRandomResource(string resourceType)  // Fetch a random resource (adjective or noun) from embedded resource file
         {
-            var parts = entry?.Split('-');
-            return parts?[1];
+            ResourceManager resourceManager = new ResourceManager("BackEnd.Resources.AdjectivesNouns", Assembly.GetExecutingAssembly());
+            var resourceSet = resourceManager.GetResourceSet(System.Globalization.CultureInfo.CurrentUICulture, true, true);
+
+            if (resourceSet == null)
+            {
+                throw new Exception("ResourceSet is null. Resource file might not be found.");
+            }
+
+            var matchingEntries = new List<DictionaryEntry>();
+            foreach (DictionaryEntry entry in resourceSet)
+            {
+                if (entry.Key.ToString().StartsWith(resourceType))
+                {
+                    matchingEntries.Add(entry);
+                }
+            }
+
+            if (matchingEntries.Count == 0)
+            {
+                throw new Exception($"No matching {resourceType} resources found.");
+            }
+
+            // Select a random entry from the matching resources
+            DictionaryEntry selectedEntry = matchingEntries[_random.Next(matchingEntries.Count)];
+            return $"{selectedEntry.Key}-{selectedEntry.Value}";
         }
+        
 
     }
     }
