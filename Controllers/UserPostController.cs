@@ -2,6 +2,7 @@
 using BackEnd.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
+using BackEnd.ViewModels;
 
 
 namespace BackEnd.Controllers
@@ -44,7 +45,44 @@ namespace BackEnd.Controllers
             }
             var userLikedPost = false;   // Flag to check if the current user has liked this post
 
-            return Ok();
+
+
+
+            var queryString2 = $"SELECT TOP 1 * FROM p WHERE p.type='like' AND p.postId = @PostId AND p.userId = @UserId ORDER BY p.dateCreated DESC";
+
+            var queryDef2 = new QueryDefinition(queryString2);
+            queryDef2.WithParameter("@PostId", postId);
+            queryDef2.WithParameter("@UserId", userId);
+            var query2 = _dbContext.PostsContainer.GetItemQueryIterator<UserPostLike>(queryDef2);
+
+            UserPostLike like = null;
+            if (query2.HasMoreResults)
+            {
+                var resp2 = await query2.ReadNextAsync();
+                var ru = resp2.RequestCharge;
+                like = resp2.FirstOrDefault();
+            }
+            userLikedPost = like != null;
+
+            var m = new BlogPostViewViewModel  // Map post data and related info into view model
+            {
+                PostId = bp.PostId,
+                Title = bp.Title,
+                Content = bp.Content,
+                CommentCount = bp.CommentCount,
+                Comments = comments,
+                UserLikedPost = userLikedPost,
+                LikeCount = bp.LikeCount,
+                AuthorId = bp.AuthorId,
+                AuthorUsername = bp.AuthorUsername
+            };
+            return Ok(m);
         }
+
+
+
+
+
+
     }
 }
