@@ -5,6 +5,7 @@ using BackEnd.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
+using System.Net;
 
 
 namespace BackEnd.Controllers
@@ -120,11 +121,39 @@ namespace BackEnd.Controllers
             try
             {
                 // TODO: Implement user creation logic
-                return Ok();
-               }
+
+                var user = new BlogUser
+                {
+                    UserId = ShortGuidGenerator.Generate(),
+                    Username = GenerateRandomName(),
+                    ProfilePicUrl = GetRandomProfilePic() // Updated for Blob Storage URLs
+                };
+
+                try
+                {
+                    user.Action = "Create";
+                    await _dbContext.UsersContainer.CreateItemAsync(user, new PartitionKey(user.UserId));
+
+                    return Ok(new
+                    {
+                        userId = user.UserId,
+                        username = user.Username,
+                        profilePic = user.ProfilePicUrl
+                    });
+                }
+                catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
+                {
+                    throw ex;
+                }
+            }
+            catch (CosmosException ex)
+            {
+                return StatusCode(500, $"Cosmos DB Error: {ex.Message}");
+            }
+               
             catch (Exception ex)
             {
-                return StatusCode(500, "Error");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
 
