@@ -101,7 +101,13 @@ namespace BackEnd.Controllers
             return Ok(messages);
         }
 
+        [Route("send-message")]
+        [HttpPost]
+        public IActionResult SendMessage()
+        {
+            return Ok();
 
+        }
 
     }
 }
