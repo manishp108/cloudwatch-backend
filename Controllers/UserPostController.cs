@@ -425,5 +425,30 @@ namespace BackEnd.Controllers
 
             return BadRequest("Invalid Data.");
         }
+
+        [Route("update-post-comment/{commentId}")]   // Route to update an existing comment by commentId
+        [HttpPut]   // Handles HTTP PUT requests
+        public async Task<IActionResult> UpdatePostComment(string commentId, [FromBody] UpdateCommentPost model)
+        {
+            // Validate input: commentId and updated content must be provided
+            if (!string.IsNullOrWhiteSpace(commentId) && !string.IsNullOrWhiteSpace(model.CommentContent))
+            {
+                var query = _dbContext.CommentsContainer.GetItemLinqQueryable<UserPostComment>()
+                        .Where(p => p.CommentId == commentId)
+                        .ToFeedIterator();
+                var postComment = (await query.ReadNextAsync()).FirstOrDefault();
+
+                if (postComment != null)
+                {
+                    postComment.CommentContent = model.CommentContent;              // Update comment content
+                    await _dbContext.CommentsContainer.UpsertItemAsync(postComment, new PartitionKey(commentId));
+                    return Ok();
+                }
+
+                return BadRequest("Post Comment not found.");
+            }
+
+            return BadRequest("Invalid Data");
+        }
     }
 }
