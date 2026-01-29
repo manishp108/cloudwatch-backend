@@ -9,15 +9,29 @@ namespace BackEnd.Entities
     public class UserPostLike             // This class will be used for mapping Likes data from Cosmos DB
 
     {
-
         [JsonProperty(PropertyName = "id")]
         public string Id
         {
             get
             {
-                return LikeId;
+                return LikeId;  // Map Cosmos DB 'id' to LikeId
             }
         }
+
+        [JsonProperty(PropertyName = "likeId")]
+        public string LikeId { get; set; }
+
+
+        [JsonProperty(PropertyName = "type")]
+        public string Type
+        {
+            get
+            {
+                return "like";
+            }
+        }
+
+
 
 
         [JsonProperty(PropertyName = "postId")]
@@ -26,7 +40,22 @@ namespace BackEnd.Entities
         [JsonProperty(PropertyName = "userId")]
         public string LikeAuthorId { get; set; }
 
+        [JsonProperty(PropertyName = "userUsername")]
+        public string LikeAuthorUsername { get; set; }
 
+        [JsonProperty(PropertyName = "userProfileUrl")]
+        public string UserProfileUrl { get; set; }
+
+
+        [JsonProperty(PropertyName = "dateCreated")]
+        public DateTime LikeDateCreated { get; set; }
+
+
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);  // Serialize object for logging/debugging
+        }
 
 
 

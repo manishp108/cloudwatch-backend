@@ -187,11 +187,40 @@ namespace BackEnd.Controllers
         // Remove once new apis integrated
         [Route("postLike")]   // Route to like a post
         [HttpPost]
-        public async Task<IActionResult> PostLike()
+        public async Task<IActionResult> PostLike([FromForm] LikePost model)    // Handle post like action
         {
             try
             {
-                return Ok();
+                var response = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(model.PostId, new PartitionKey(model.PostId));
+                var post = response.Resource;    // Fetch the blog post using postId as id and partition key
+
+                if (post != null)
+                {
+                    var queryString = "SELECT TOP 1 * FROM p WHERE p.type='like' AND p.postId = @PostId AND p.userId = @UserId";
+                    var queryDef = new QueryDefinition(queryString)
+                        .WithParameter("@PostId", model.PostId)
+                        .WithParameter("@UserId", model.LikeAuthorId);
+
+                    var query = _dbContext.PostsContainer.GetItemQueryIterator<UserPostLike>(queryDef);
+                    var existingLike = (await query.ReadNextAsync()).FirstOrDefault();
+
+                    if (existingLike == null)
+                    {
+                        var like = new UserPostLike
+                        {
+                            LikeId = Guid.NewGuid().ToString(),
+                            PostId = model.PostId,
+                            LikeAuthorId = model.LikeAuthorId,
+                            LikeAuthorUsername = model.LikeAuthorUsername,
+                            LikeDateCreated = DateTime.UtcNow,
+                            UserProfileUrl = model.UserProfileUrl
+                        };
+
+                        await _dbContext.PostsContainer.UpsertItemAsync(like, new PartitionKey(model.PostId));                 // Save like document to Cosmos DB
+                        post.LikeCount++;
+                    }
+                    return Ok();
+                }
             }
             catch
             {
