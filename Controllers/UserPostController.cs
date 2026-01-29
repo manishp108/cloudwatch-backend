@@ -239,13 +239,22 @@ namespace BackEnd.Controllers
 
 
         // Remove once new apis integrated
-        [Route("post/{postId}/unlike")]    
+        [Route("post/{postId}/unlike")]      // Route to unlike a post by postId
         [HttpPost]
-        public IActionResult PostUnlike()
+        public async Task<IActionResult> PostUnlike(string postId)  // Remove like from a post
         {
+            ItemResponse<UserPost> response = await this._dbContext.PostsContainer.ReadItemAsync<UserPost>(postId, new PartitionKey(postId));
+            var ru = response.RequestCharge;
+            var bp = response.Resource;
 
+            if (bp != null)
+            {                          // Get the logged-in user ID
+                var userId = User.Claims.FirstOrDefault(p => p.Type == ClaimTypes.NameIdentifier).Value;
+                var obj = new dynamic[] { postId, userId };
+                var result = await _dbContext.PostsContainer.Scripts.ExecuteStoredProcedureAsync<string>("deleteLike", new PartitionKey(postId), obj);
+            }
 
-            return Ok();
+            return Ok(new { postId = postId });
         }
         }
 }
