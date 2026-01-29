@@ -4,6 +4,7 @@ using BackEnd.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using System.Reflection.Metadata;
+using System.Security.Claims;
 
 
 namespace BackEnd.Controllers
@@ -96,11 +97,14 @@ namespace BackEnd.Controllers
                 Content = bp.Content
             };
             return Ok(m);
-
         }
 
-
-
-
+        [Route("post/new")]   
+        [HttpPost]   // Handles HTTP POST requests 
+        public async Task<IActionResult> PostNew( )
+        {
+     
+            return Ok();
+        }
     }
 }
