@@ -487,5 +487,77 @@ namespace BackEnd.Controllers
 
             return Ok(postComments);
         }
+
+        [Route("report-post")]  // Route to report a post
+        [HttpPost]
+        public async Task<IActionResult> ReportPost([FromBody] ReportPost model)  // Report post API
+        {
+
+            if (!string.IsNullOrWhiteSpace(model.PostId) && !string.IsNullOrWhiteSpace(model.ReportedUserId) && !string.IsNullOrWhiteSpace(model.Reason))
+            {
+                ItemResponse<UserPost> response = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(model.PostId, new PartitionKey(model.PostId));
+                var post = response.Resource;
+
+                if (post != null)
+                {
+                    post.ReportCount++;
+                    if (post.ReportCount == 3)
+                    {
+                        await DeleteBlobFromAzureStorageAsync(post.Content);
+                        await _dbContext.PostsContainer.DeleteItemAsync<UserPost>(post.Id, new PartitionKey(post.PostId));
+
+                        // Remove entries from ReportedPosts Container as Post has been deleted.
+                        var reportIds = new List<string>();
+                        var query = _dbContext.ReportedPostsContainer.GetItemLinqQueryable<ReportedPost>()
+                                    .Where(p => p.PostId == post.Id)
+                                    .Select(p => p.Id)
+                                    .ToFeedIterator();
+                        while (query.HasMoreResults)
+                        {
+                            var res = await query.ReadNextAsync();
+                            reportIds.AddRange(res.ToList());
+                        }
+
+                        foreach (var id in reportIds)
+                        {
+                            await _dbContext.ReportedPostsContainer.DeleteItemAsync<ReportedPost>(id, new PartitionKey(id));
+                        }
+                    }
+                    else
+                    {
+                        await _dbContext.PostsContainer.UpsertItemAsync(post, new PartitionKey(post.Id));
+
+                        var reportedPost = new ReportedPost
+                        {
+                            Id = ShortGuidGenerator.Generate(),
+                            PostId = model.PostId,
+                            ReportedUserId = model.ReportedUserId,
+                            Reason = model.Reason,
+                            ReportedOn = DateTime.UtcNow
+                        };
+                        await _dbContext.ReportedPostsContainer.UpsertItemAsync(reportedPost, new PartitionKey(reportedPost.Id));
+                    }
+
+                    return Ok(new { postReportCount = post.ReportCount });
+                }
+
+                return BadRequest("Post not found.");
+            }
+
+            return BadRequest("Invalid Data.");
+        }
+
+        private async Task DeleteBlobFromAzureStorageAsync(string blobUrl)  
+        {
+            try
+            {
+                // Implement logic to delete the blob from Azure Storage using the blobUrl
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting blob: {ex.Message}");
+            }
+
+        }
     }
 }
