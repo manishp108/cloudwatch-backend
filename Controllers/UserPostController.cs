@@ -236,8 +236,16 @@ namespace BackEnd.Controllers
                 return StatusCode(500, "An error occurred while processing the like request.");
             }
         }
-        
-            
 
-            }
+
+        // Remove once new apis integrated
+        [Route("post/{postId}/unlike")]    
+        [HttpPost]
+        public IActionResult PostUnlike()
+        {
+
+
+            return Ok();
+        }
+        }
 }
