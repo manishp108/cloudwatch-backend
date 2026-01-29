@@ -470,5 +470,22 @@ namespace BackEnd.Controllers
             }
             return BadRequest("Invalid CommentId");
         }
+
+        [Route("post-comments")]  // Route to retrieve comments for a post
+        [HttpGet]    // Handles HTTP GET requests
+        public async Task<IActionResult> GetPostComments(string postId)
+        {
+            var postComments = new List<UserPostComment>();
+            var query = _dbContext.CommentsContainer.GetItemLinqQueryable<UserPostComment>()      // Build LINQ query to fetch comments by postId from Comments container
+                        .Where(p => p.PostId == postId)
+                        .ToFeedIterator();
+            while (query.HasMoreResults)
+            {
+                var response = await query.ReadNextAsync();
+                postComments.AddRange(response.ToList());
+            }
+
+            return Ok(postComments);
+        }
     }
 }
