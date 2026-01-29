@@ -24,5 +24,11 @@ namespace BackEnd.Entities
         [JsonProperty(PropertyName = "reportedUserId")]
         public string ReportedUserId { get; set; }
 
+        [JsonProperty(PropertyName = "reason")]
+        public string Reason { get; set; }
+
+        [JsonProperty(PropertyName = "reportedOn")]
+        public DateTime ReportedOn { get; set; }
+
     }
 }
