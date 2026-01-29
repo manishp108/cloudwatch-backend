@@ -183,5 +183,21 @@ namespace BackEnd.Controllers
             }
             return Ok(new { postId = model.PostId });
         }
-    }
+
+        // Remove once new apis integrated
+        [Route("postLike")]   // Route to like a post
+        [HttpPost]
+        public async Task<IActionResult> PostLike()
+        {
+            try
+            {
+                return Ok();
+            }
+            catch
+            {
+                return Ok();
+            }
+        }
+            
+            }
 }
