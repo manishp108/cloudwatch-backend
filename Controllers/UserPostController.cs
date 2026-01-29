@@ -125,10 +125,20 @@ namespace BackEnd.Controllers
 
         [Route("post/edit/{postId}")]   // Route to update an existing post by postId
         [HttpPost]   
-        public  IActionResult PostEdit()
+        public async Task<IActionResult> PostEdit(string postId, BlogPostEditViewModel blogPostChanges)
         {
-            
-            return Ok();
+            ItemResponse<UserPost> response = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(postId, new PartitionKey(postId));
+            var ru = response.RequestCharge;
+            var bp = response.Resource;
+
+            bp.Title = blogPostChanges.Title;
+            bp.Content = blogPostChanges.Content;
+
+            //Update the database with these changes.
+            await _dbContext.PostsContainer.UpsertItemAsync<UserPost>(bp, new PartitionKey(bp.PostId));
+
+            //Show the view with a message that the blog post has been updated.
+            return Ok(blogPostChanges);
         }
     }
 }
