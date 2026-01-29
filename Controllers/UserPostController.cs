@@ -140,5 +140,14 @@ namespace BackEnd.Controllers
             //Show the view with a message that the blog post has been updated.
             return Ok(blogPostChanges);
         }
+
+        // Remove once new apis integrated
+        [Route("PostCommentNew")]   // Route to create a new comment (temporary API)
+        [HttpPost]
+        public async Task<IActionResult> PostCommentNew()
+        {
+
+            return Ok();
+        }
     }
 }
