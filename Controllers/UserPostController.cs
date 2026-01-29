@@ -3,6 +3,7 @@ using BackEnd.Entities;
 using BackEnd.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Security.Claims;
@@ -369,5 +370,23 @@ namespace BackEnd.Controllers
                 return StatusCode(500, "An error occurred while processing the like request.");
             }
         }
+
+        [Route("post-likes")]  // Route to retrieve likes for a post
+        [HttpGet]      // Handles HTTP GET requests
+        public async Task<IActionResult> GetPostLikes(string postId)
+        {
+            var postLikes = new List<UserPostLike>();
+            var query = _dbContext.LikesContainer.GetItemLinqQueryable<UserPostLike>()
+                        .Where(p => p.PostId == postId)
+                        .ToFeedIterator();
+            while (query.HasMoreResults)   // Read all pages of results from Cosmos DB
+            {
+                var response = await query.ReadNextAsync();
+                postLikes.AddRange(response.ToList());
+            }
+
+            return Ok(postLikes);
         }
+
+    }
 }
