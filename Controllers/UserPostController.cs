@@ -101,10 +101,26 @@ namespace BackEnd.Controllers
 
         [Route("post/new")]   
         [HttpPost]   // Handles HTTP POST requests 
-        public async Task<IActionResult> PostNew( )
+        public async Task<IActionResult> PostNew(BlogPostEditViewModel blogPostChanges)
         {
-     
-            return Ok();
+            blogPostChanges.Content = "Testing Text";
+
+            var blogPost = new UserPost
+            {
+                PostId = Guid.NewGuid().ToString(),
+                Title = blogPostChanges.Title,
+                Content = blogPostChanges.Content,
+                AuthorId = User.Claims.FirstOrDefault(p => p.Type == ClaimTypes.NameIdentifier).Value,
+                AuthorUsername = User.Identity.Name,
+                DateCreated = DateTime.UtcNow,
+            };
+
+            //Insert the new blog post into the database.
+            await _dbContext.PostsContainer.UpsertItemAsync<UserPost>(blogPost, new PartitionKey(blogPost.PostId));
+
+
+            //Show the view with a message that the blog post has been created.
+            return Ok(blogPostChanges);
         }
     }
 }
