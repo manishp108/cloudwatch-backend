@@ -260,11 +260,30 @@ namespace BackEnd.Controllers
         // Remove once new apis integrated
         [Route("PostLikes")]     // Route to fetch likes for a post
         [HttpGet]
-        public IActionResult PostLikes()
+        public async Task<IActionResult> PostLikes(string postId)
         {
+            ItemResponse<UserPost> response_ = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(postId, new PartitionKey(postId));
+            var bp = response_.Resource;
 
+            var postLikes = new List<UserPostLike>();
+            if (bp != null)
+            {
+                //Check that this user has not already liked this post
+                var queryString = $"SELECT * FROM p WHERE p.type='like' AND p.postId = @PostId  ORDER BY p.dateCreated DESC";
 
-            return Ok();
+                var queryDef = new QueryDefinition(queryString);
+                queryDef.WithParameter("@PostId", postId);
+                var query = _dbContext.PostsContainer.GetItemQueryIterator<UserPostLike>(queryDef);
+
+                if (query.HasMoreResults)
+                {
+                    var response = await query.ReadNextAsync();
+                    var ru = response.RequestCharge;
+                    postLikes.AddRange(response.ToList());
+                }
+            }
+
+            return Ok(postLikes);
         }
 
 
