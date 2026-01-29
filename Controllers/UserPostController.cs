@@ -450,5 +450,25 @@ namespace BackEnd.Controllers
 
             return BadRequest("Invalid Data");
         }
+
+        [Route("delete-post-comment/{commentId}")]
+        [HttpDelete]
+        public async Task<IActionResult> DeletePostComment(string commentId)
+        {
+            if (!string.IsNullOrWhiteSpace(commentId))
+            {
+                var query = _dbContext.CommentsContainer.GetItemLinqQueryable<UserPostComment>()
+                        .Where(p => p.CommentId == commentId)
+                        .ToFeedIterator();
+                var postComment = (await query.ReadNextAsync()).FirstOrDefault();
+                if (postComment != null)
+                {
+                    await _dbContext.CommentsContainer.DeleteItemAsync<UserPostComment>(commentId, new PartitionKey(commentId));
+                    return Ok();
+                }
+                return BadRequest("Post Comment not found.");
+            }
+            return BadRequest("Invalid CommentId");
+        }
     }
 }
