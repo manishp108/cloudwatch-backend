@@ -82,10 +82,20 @@ namespace BackEnd.Controllers
 
         [Route("post/edit/{postId}")]    
         [HttpGet]   // Handles HTTP GET requests
-        public IActionResult PostEdit()
+        public async Task<IActionResult> PostEdit(string postId)
         {
+            //When getting the blogpost from the Posts container, the id is postId and the partitionKey is also postId.
+            //  This will automatically return only the type="post" for this postId (and not the type=comment or any other types in the same partition postId)
+            ItemResponse<UserPost> response = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(postId, new PartitionKey(postId));
+            var ru = response.RequestCharge;
+            var bp = response.Resource;
 
-            return Ok();
+            var m = new BlogPostEditViewModel
+            {
+                Title = bp.Title,
+                Content = bp.Content
+            };
+            return Ok(m);
 
         }
 
