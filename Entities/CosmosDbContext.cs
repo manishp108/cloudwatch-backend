@@ -11,6 +11,7 @@ namespace BackEnd.Entities
         public Container UsersContainer { get; }
         public Container ChatsContainer { get; }
         public Container MessagesContainer { get; }  // Cosmos DB container for storing chat messages
+        public Container CommentsContainer { get; }
 
 
 
@@ -24,6 +25,7 @@ namespace BackEnd.Entities
             var usersContainerName = configuration["CosmosDbSettings:UsersContainerName"];
             var chatsContainerName = configuration["CosmosDbSettings:ChatsContainerName"];
             var messagesContainerName = configuration["CosmosDbSettings:MessagesContainerName"];
+            var commentsContainerName = configuration["CosmosDbSettings:CommentsContainerName"];
 
 
 
@@ -34,6 +36,7 @@ namespace BackEnd.Entities
             UsersContainer = cosmosClient.GetContainer(databaseName, usersContainerName);
             ChatsContainer = cosmosClient.GetContainer(databaseName, chatsContainerName);
             MessagesContainer = cosmosClient.GetContainer(databaseName, messagesContainerName);
+            CommentsContainer = cosmosClient.GetContainer(databaseName, commentsContainerName);
 
 
         }

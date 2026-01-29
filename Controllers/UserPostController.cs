@@ -388,5 +388,42 @@ namespace BackEnd.Controllers
             return Ok(postLikes);
         }
 
+
+
+        [Route("create-post-comment")]
+        [HttpPost]
+        public async Task<IActionResult> CreatePostComment([FromBody] CommentPost model)
+        {
+
+            if (!string.IsNullOrWhiteSpace(model.CommentContent))
+            {
+                ItemResponse<UserPost> response = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(model.PostId, new PartitionKey(model.PostId));
+                var post = response.Resource;
+
+                if (post != null)
+                {
+                    var blogPostComment = new UserPostComment
+                    {
+                        CommentId = ShortGuidGenerator.Generate(),
+                        PostId = model.PostId,
+                        CommentContent = model.CommentContent,
+                        CommentAuthorId = model.CommentAuthorId,
+                        CommentAuthorUsername = model.CommentAuthorUsername,
+                        CommentDateCreated = DateTime.UtcNow,
+                        UserProfileUrl = model.UserProfileUrl,
+                    };
+
+                    await _dbContext.CommentsContainer.UpsertItemAsync(blogPostComment, new PartitionKey(blogPostComment.CommentId));
+                    post.CommentCount++;
+
+                    await _dbContext.PostsContainer.UpsertItemAsync(post, new PartitionKey(model.PostId));
+                    return Ok(new { commentCount = post.CommentCount });
+                }
+
+                return BadRequest("Post not found.");
+            }
+
+            return BadRequest("Invalid Data.");
+        }
     }
 }
