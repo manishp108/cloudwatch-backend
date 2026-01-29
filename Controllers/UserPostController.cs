@@ -256,5 +256,17 @@ namespace BackEnd.Controllers
 
             return Ok(new { postId = postId });
         }
+
+        // Remove once new apis integrated
+        [Route("PostLikes")]     // Route to fetch likes for a post
+        [HttpGet]
+        public IActionResult PostLikes()
+        {
+
+
+            return Ok();
         }
+
+
+    }
 }
