@@ -122,5 +122,13 @@ namespace BackEnd.Controllers
             //Show the view with a message that the blog post has been created.
             return Ok(blogPostChanges);
         }
+
+        [Route("post/edit/{postId}")]   // Route to update an existing post by postId
+        [HttpPost]   
+        public  IActionResult PostEdit()
+        {
+            
+            return Ok();
+        }
     }
 }
