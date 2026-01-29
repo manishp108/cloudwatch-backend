@@ -1,8 +1,9 @@
 ﻿using Azure.Storage.Blobs;
 using BackEnd.Entities;
+using BackEnd.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
-using BackEnd.ViewModels;
+using System.Reflection.Metadata;
 
 
 namespace BackEnd.Controllers
@@ -79,7 +80,14 @@ namespace BackEnd.Controllers
             return Ok(m);
         }
 
+        [Route("post/edit/{postId}")]    
+        [HttpGet]   // Handles HTTP GET requests
+        public IActionResult PostEdit()
+        {
 
+            return Ok();
+
+        }
 
 
 
