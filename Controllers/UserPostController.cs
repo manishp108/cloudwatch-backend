@@ -17,6 +17,8 @@ namespace BackEnd.Controllers
     {
         private readonly CosmosDbContext _dbContext;
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly string _feedContainer = "media";
+
         public UserPostController(CosmosDbContext dbContext, BlobServiceClient blobServiceClient)
         {
             _dbContext = dbContext;
@@ -552,6 +554,15 @@ namespace BackEnd.Controllers
             try
             {
                 // Implement logic to delete the blob from Azure Storage using the blobUrl
+                Uri blobUri = new Uri(blobUrl);
+                string blobName = blobUri.Segments[2];
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_feedContainer);
+                Console.WriteLine($"Connecting to Blob Container: {_feedContainer}");
+                var blobClient = containerClient.GetBlobClient(blobName);
+                await blobClient.DeleteIfExistsAsync();
+
+                Console.WriteLine($"Blob '{blobName}' has been deleted successfully.");
             }
             catch (Exception ex)
             {
