@@ -286,6 +286,34 @@ namespace BackEnd.Controllers
             return Ok(postLikes);
         }
 
+        // Remove once new apis integrated
+        [Route("PostComments")]
+        [HttpGet]
+        public async Task<IActionResult> PostComments(string postId)
+        {
 
+            ItemResponse<UserPost> response_ = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(postId, new PartitionKey(postId));
+            var bp = response_.Resource;
+
+            var postComments = new List<UserPostComment>();
+            if (bp != null)
+            {
+                //Check that this user has not already liked this post
+                var queryString = $"SELECT * FROM p WHERE p.type='comment' AND p.postId = @PostId  ORDER BY p.dateCreated DESC";
+
+                var queryDef = new QueryDefinition(queryString);
+                queryDef.WithParameter("@PostId", postId);
+                var query = _dbContext.PostsContainer.GetItemQueryIterator<UserPostComment>(queryDef);
+
+                if (query.HasMoreResults)
+                {
+                    var response = await query.ReadNextAsync();
+                    var ru = response.RequestCharge;
+                    postComments.AddRange(response.ToList());
+                }
+            }
+
+            return Ok(postComments);
+        }
     }
 }
