@@ -315,5 +315,20 @@ namespace BackEnd.Controllers
 
             return Ok(postComments);
         }
-    }
+
+        [Route("like-unlike-post")]
+        [HttpPost]
+        public async Task<IActionResult> LikeUnlikePost([FromForm] LikePost model)
+        {
+            try
+            {
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(500, "Internal server error");
+            }
+        }
+        }
 }
