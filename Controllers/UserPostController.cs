@@ -219,14 +219,25 @@ namespace BackEnd.Controllers
                         await _dbContext.PostsContainer.UpsertItemAsync(like, new PartitionKey(model.PostId));                 // Save like document to Cosmos DB
                         post.LikeCount++;
                     }
-                    return Ok();
+                    else
+                    {
+                        await _dbContext.PostsContainer.DeleteItemAsync<UserPostLike>(existingLike.LikeId, new PartitionKey(model.PostId));
+                        post.LikeCount--;    // Decrement like count
+                    }
+
+                    await _dbContext.PostsContainer.UpsertItemAsync(post, new PartitionKey(post.PostId));
+                    return Ok(new { likeCount = post.LikeCount });  // Return updated like count to client
                 }
+                return NotFound("Post not found.");
             }
-            catch
-            {
-                return Ok();
+          
+            catch (Exception ex)
+            {    // Handle unexpected errors during like/unlike processing
+                return StatusCode(500, "An error occurred while processing the like request.");
             }
         }
+        
             
+
             }
 }
