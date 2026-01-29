@@ -322,12 +322,51 @@ namespace BackEnd.Controllers
         {
             try
             {
-                return Ok();
+                var response = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(model.PostId, new PartitionKey(model.PostId));
+                var post = response.Resource;
+
+                if (post != null)
+                {
+                    var queryString = "SELECT TOP 1 * FROM p WHERE p.type='like' AND p.postId = @PostId AND p.userId = @UserId";
+                    var queryDef = new QueryDefinition(queryString)
+                        .WithParameter("@PostId", model.PostId)
+                        .WithParameter("@UserId", model.LikeAuthorId);
+
+                    var query = _dbContext.LikesContainer.GetItemQueryIterator<UserPostLike>(queryDef);
+                    var existingLike = (await query.ReadNextAsync()).FirstOrDefault();
+
+                    if (existingLike == null)
+                    {
+                        var like = new UserPostLike
+                        {
+                            LikeId = ShortGuidGenerator.Generate(),
+                            PostId = model.PostId,
+                            LikeAuthorId = model.LikeAuthorId,
+                            LikeAuthorUsername = model.LikeAuthorUsername,
+                            LikeDateCreated = DateTime.UtcNow,
+                            UserProfileUrl = model.UserProfileUrl
+                        };
+
+                        await _dbContext.LikesContainer.UpsertItemAsync(like, new PartitionKey(like.LikeId));
+                        post.LikeCount++;
+                    }
+                    else
+                    {
+                        await _dbContext.LikesContainer.DeleteItemAsync<UserPostLike>(existingLike.LikeId, new PartitionKey(existingLike.LikeId));
+                        if (post.LikeCount > 0)
+                        {
+                            post.LikeCount--;
+                        }
+                    }
+                    await _dbContext.PostsContainer.UpsertItemAsync(post, new PartitionKey(model.PostId));
+                    return Ok(new { likeCount = post.LikeCount });
+                }
+                return BadRequest("Post not found.");
             }
             catch (Exception ex)
             {
-
-                return StatusCode(500, "Internal server error");
+                Console.WriteLine($"Error toggling like: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing the like request.");
             }
         }
         }
