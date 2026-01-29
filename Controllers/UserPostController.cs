@@ -3,6 +3,7 @@ using BackEnd.Entities;
 using BackEnd.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Security.Claims;
 
@@ -144,10 +145,43 @@ namespace BackEnd.Controllers
         // Remove once new apis integrated
         [Route("PostCommentNew")]   // Route to create a new comment (temporary API)
         [HttpPost]
-        public async Task<IActionResult> PostCommentNew()
+        public async Task<IActionResult> PostCommentNew([FromForm] CommentPost model)
         {
+            if (!string.IsNullOrWhiteSpace(model.CommentContent))
+            {
+                ItemResponse<UserPost> response = await _dbContext.PostsContainer.ReadItemAsync<UserPost>(model.PostId, new PartitionKey(model.PostId));
+                var ru = response.RequestCharge;
+                var bp = response.Resource;
 
-            return Ok();
+                if (bp != null)
+                {            // Create new comment entity
+                    var blogPostComment = new UserPostComment
+                    {
+                        CommentId = Guid.NewGuid().ToString(),
+                        PostId = Guid.NewGuid().ToString(),
+                        CommentContent = model.CommentContent,
+                        CommentAuthorId = model.CommentAuthorId,
+                        CommentAuthorUsername = model.CommentAuthorUsername,
+                        CommentDateCreated = DateTime.UtcNow,
+                        UserProfileUrl = model.UserProfileUrl,
+                    };
+
+                    // Stored procedure arguments (postId + comment object)
+                    var obj = new dynamic[] { blogPostComment.PostId, blogPostComment };
+
+                    try
+                    {
+                        var result = await _dbContext.PostsContainer.Scripts.ExecuteStoredProcedureAsync<string>("createComment", new PartitionKey(blogPostComment.PostId), obj);
+                    }
+                    catch (Exception ex)
+                    {
+                        var e = ex.Message;
+                    }
+
+
+                }
+            }
+            return Ok(new { postId = model.PostId });
         }
     }
 }
