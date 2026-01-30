@@ -1,5 +1,11 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Azure.Identity;
+using Azure.Storage.Blobs;
+using BackEnd.Entities;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,10 +27,28 @@ namespace BackEnd
         // Add services to the container
         public void ConfigureServices(IServiceCollection services)          // Add services to the container
         {
-            services.AddControllers();
+            try
+            {
+                Console.WriteLine("Starting ConfigureServices...");
 
-            // ✅ ADD SWAGGER
-            services.AddSwaggerGen();
+                var credentialOptions = new DefaultAzureCredentialOptions
+                {
+                    ExcludeVisualStudioCredential = true,
+                    ExcludeAzureCliCredential = false,
+                    ExcludeEnvironmentCredential = true,
+                    ExcludeManagedIdentityCredential = true,
+                    ExcludeSharedTokenCacheCredential = true,
+                    ExcludeInteractiveBrowserCredential = true,
+                    TenantId = "f6d006d0-5280-44ab-9fa1-85c211e2ab03"              // Specify Azure AD tenant for authentication
+                };
+
+               
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ConfigureServices: {ex}");
+                throw;
+            }
         }
 
         // Configure the HTTP request pipeline
