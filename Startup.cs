@@ -6,17 +6,20 @@ using Microsoft.Extensions.Hosting;
 
 namespace BackEnd
 {
-    public class Startup
+    public class Startup 
     {
+        private readonly IConfiguration _configuration;          // Stores application configuration for access throughout Startup
+
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            Configuration = configuration;              // Assign injected configuration instance
+            Console.WriteLine("Startup constructor called.");
         }
 
         public IConfiguration Configuration { get; }
 
         // Add services to the container
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)          // Add services to the container
         {
             services.AddControllers();
 
